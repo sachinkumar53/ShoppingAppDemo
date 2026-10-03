@@ -8,20 +8,23 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -30,40 +33,112 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.sachin.shopping.demo.R
 import com.sachin.shopping.demo.data.model.ProductListing
-import org.orbitmvi.orbit.compose.collectAsState
 import kotlin.math.roundToInt
 
 @Composable
 fun ProductListScreen(
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
-    val state by viewModel.collectAsState()
+    val paginatedProducts = viewModel.products.collectAsLazyPagingItems()
+
     ProductListScreen(
-        state = state
+        productListingItems = paginatedProducts
     )
 }
 
 
 @Composable
 private fun ProductListScreen(
-    state: ProductListUiState
+    productListingItems: LazyPagingItems<ProductListing>
 ) {
     Scaffold { innerPadding ->
         LazyVerticalStaggeredGrid(
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
             columns = StaggeredGridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalItemSpacing = 12.dp,
             contentPadding = PaddingValues(16.dp)
         ) {
-            items(state.products.size) { index ->
-                val product = state.products[index]
-                ProductListingCard(
-                    product = product
-                )
+            items(
+                productListingItems.itemCount,
+                key = productListingItems.itemKey { it.id }
+            ) { index ->
+                productListingItems[index]?.let {
+                    ProductListingCard(
+                        product = it,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            // Initial loading
+            when (productListingItems.loadState.refresh) {
+                is LoadState.Error -> {
+                    item(span = StaggeredGridItemSpan.FullLine) {
+                        Button(onClick = {
+                            // TODO: Implement retry logic
+                        }) {
+                            Text("Retry")
+                        }
+                    }
+                }
+
+                LoadState.Loading -> {
+                    item(
+                        span = StaggeredGridItemSpan.FullLine
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+
+                else -> {
+
+                }
+            }
+
+            when (productListingItems.loadState.append) {
+                is LoadState.Error -> {
+                    item(span = StaggeredGridItemSpan.FullLine) {
+                        Button(onClick = {
+                            // TODO: Implement retry logic
+                        }) {
+                            Text("Retry")
+                        }
+                    }
+                }
+
+                LoadState.Loading -> {
+                    item(
+                        span = StaggeredGridItemSpan.FullLine
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+
+                else -> {
+
+                }
             }
         }
     }
