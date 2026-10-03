@@ -5,7 +5,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.sachin.shopping.demo.data.model.ProductListing
 import com.sachin.shopping.demo.data.remote.ApiService
-import com.sachin.shopping.demo.paging.ProductsPagingSource
+import com.sachin.shopping.demo.data.paging.ProductsPagingSource
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton

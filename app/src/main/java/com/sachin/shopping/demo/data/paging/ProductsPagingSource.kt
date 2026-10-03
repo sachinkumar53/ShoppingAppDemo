@@ -1,4 +1,4 @@
-package com.sachin.shopping.demo.paging
+package com.sachin.shopping.demo.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
