@@ -30,10 +30,17 @@ class ProductDetailViewModel @Inject constructor(
             }
         }
     }
+
+    fun onQuantityChange(quantity: Int) = intent {
+        reduce {
+            state.copy(quantity = quantity)
+        }
+    }
 }
 
 data class ProductDetailState(
     val product: Product? = null,
+    val quantity: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null
 )

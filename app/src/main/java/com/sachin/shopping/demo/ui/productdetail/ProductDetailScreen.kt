@@ -1,7 +1,11 @@
 package com.sachin.shopping.demo.ui.productdetail
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -59,6 +62,7 @@ import com.sachin.shopping.demo.R
 import com.sachin.shopping.demo.data.model.Review
 import com.sachin.shopping.demo.ui.component.Avatar
 import com.sachin.shopping.demo.ui.component.DiscountText
+import com.sachin.shopping.demo.ui.component.QuantitySelector
 import com.sachin.shopping.demo.util.RelativeTimeFormatter
 import com.sachin.shopping.demo.util.formatPrice
 import com.tbuonomo.viewpagerdotsindicator.compose.DotsIndicator
@@ -107,20 +111,53 @@ fun ProductDetailScreen(
                     shadowElevation = 12.dp,
                     color = MaterialTheme.colorScheme.surface
                 ) {
-                    Button(
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.navigationBars)
-                            .padding(16.dp),
-                        onClick = {
-                        }
+                            .padding(16.dp)
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_add_to_cart),
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text("Add to Cart")
+                        AnimatedVisibility(
+                            visible = state.quantity > 0,
+                            enter = fadeIn() + expandHorizontally(
+                                expandFrom = Alignment.Start
+                            ),
+                            exit = fadeOut() + shrinkHorizontally(
+                                shrinkTowards = Alignment.Start
+                            )
+                        ) {
+                            QuantitySelector(
+                                quantity = state.quantity,
+                                onQuantityChange = viewModel::onQuantityChange,
+                                maxQuantity = product.stock,
+                                modifier = Modifier.padding(end = 16.dp)
+                            )
+                        }
+
+                        Button(
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                if (state.quantity > 0) {
+                                    //TODO: Navigate to Cart
+                                } else {
+                                    viewModel.onQuantityChange(1)
+                                }
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    if (state.quantity > 0)
+                                        R.drawable.ic_cart
+                                    else
+                                        R.drawable.ic_add_to_cart
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                            Text(
+                                if (state.quantity > 0) "Go to Cart" else "Add to Cart"
+                            )
+                        }
                     }
                 }
             }
@@ -436,78 +473,6 @@ private fun LazyListScope.reviewsSection(
         }
     }
 }
-
-@Composable
-private fun QuantitySelector(
-    quantity: Int,
-    onQuantityChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-    minQuantity: Int = 0,
-    maxQuantity: Int = Int.MAX_VALUE,
-    accentColor: Color = MaterialTheme.colorScheme.primary
-) {
-    Row(
-        modifier = modifier
-            .border(
-                width = 1.dp,
-                color = accentColor,
-                shape = RoundedCornerShape(10.dp)
-            )
-            .background(
-                color = Color.Transparent,
-                shape = RoundedCornerShape(10.dp)
-            )
-            .padding(2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        IconButton(
-            onClick = {
-                if (quantity > minQuantity) {
-                    onQuantityChange(quantity - 1)
-                }
-            },
-            enabled = quantity > minQuantity,
-            modifier = Modifier.size(36.dp)
-        ) {
-            Text(
-                text = "−",
-                fontSize = 22.sp,
-                color = if (quantity > minQuantity)
-                    accentColor else Color.Gray,
-                textAlign = TextAlign.Center
-            )
-        }
-
-        Text(
-            text = quantity.toString(),
-            modifier = Modifier.widthIn(min = 28.dp),
-            textAlign = TextAlign.Center,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        IconButton(
-            onClick = {
-                if (quantity < maxQuantity) {
-                    onQuantityChange(quantity + 1)
-                }
-            },
-            enabled = quantity < maxQuantity,
-            modifier = Modifier.size(36.dp)
-        ) {
-            Text(
-                text = "+",
-                fontSize = 22.sp,
-                color = if (quantity < maxQuantity)
-                    accentColor else Color.Gray,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
 
 @Composable
 private fun StarRating(
