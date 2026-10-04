@@ -16,17 +16,6 @@ import com.sachin.shopping.demo.data.remote.dto.Review as ReviewDto
 
 private val gson = Gson()
 
-fun ProductDto.toProductListing() = ProductListing(
-    id = id,
-    title = title,
-    price = price,
-    rating = rating,
-    thumbnail = thumbnail,
-    brand = brand,
-    discountPercentage = discountPercentage.roundToInt(),
-    inStock = stock > 0
-)
-
 fun ProductDto.toModel(): Product {
     return Product(
         id = id,
