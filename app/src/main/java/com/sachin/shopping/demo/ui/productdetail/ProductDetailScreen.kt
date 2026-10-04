@@ -32,15 +32,22 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -50,11 +57,14 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.sachin.shopping.demo.R
 import com.sachin.shopping.demo.data.model.Review
+import com.sachin.shopping.demo.ui.component.Avatar
+import com.sachin.shopping.demo.ui.component.DiscountText
 import com.sachin.shopping.demo.util.RelativeTimeFormatter
 import com.sachin.shopping.demo.util.formatPrice
 import com.tbuonomo.viewpagerdotsindicator.compose.DotsIndicator
 import com.tbuonomo.viewpagerdotsindicator.compose.model.DotGraphic
 import com.tbuonomo.viewpagerdotsindicator.compose.type.ShiftIndicatorType
+import com.webtoonscorp.android.readmore.material3.ReadMoreText
 import org.orbitmvi.orbit.compose.collectAsState
 
 @Composable
@@ -64,6 +74,8 @@ fun ProductDetailScreen(
 ) {
     val state by viewModel.collectAsState()
     val product = state.product
+
+    var descExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -117,22 +129,12 @@ fun ProductDetailScreen(
         LazyColumn(modifier = Modifier.padding(innerPadding)) {
             if (state.isLoading) {
                 item {
-                    Box(
-                        modifier = Modifier.fillParentMaxSize()
-
-                    ) {
+                    Box(modifier = Modifier.fillParentMaxSize()) {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     }
                 }
             } else if (product != null) {
-                item {
-                    ImageSlider(
-                        images = product.images,
-                        modifier = Modifier
-                            .fillParentMaxWidth()
-                            .fillMaxHeight(0.5f)
-                    )
-                }
+                heroSection(images = product.images)
 
                 item {
                     Column(
@@ -145,71 +147,112 @@ fun ProductDetailScreen(
                             .padding(horizontal = 16.dp)
                     ) {
                         Spacer(Modifier.size(16.dp))
-                        product.brand?.let {
+                        product.brand?.let { brand ->
                             Text(
-                                text = it,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                text = brand.map { it.uppercase() }.joinToString(""),
+                                style = TextStyle(
+                                    fontSize = 11.sp,
+                                    lineHeight = 16.sp,
+                                    letterSpacing = 2.5.sp
+                                )
                             )
                         }
+                        Spacer(modifier = Modifier.size(6.dp))
                         Text(
                             text = product.title,
-                            style = MaterialTheme.typography.bodyMedium
+                            fontSize = 18.sp,
+                            lineHeight = 24.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Row {
-                            if (product.discountPercentage != null) {
-                                Text(
-                                    text = formatPrice(product.price),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    textDecoration = TextDecoration.LineThrough,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
-                            }
-                            Text(
-                                text = formatPrice(product.discountedPrice ?: product.price),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(start = 4.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            StarRating(product.rating)
+                            VerticalDivider(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .height(16.dp)
                             )
-                            if (product.discountPercentage > 0) {
-                                Text(
-                                    text = "${product.discountPercentage}% OFF",
-                                    modifier = Modifier.padding(
-                                        horizontal = 10.dp,
-                                        vertical = 6.dp
-                                    ),
-                                    color = Color(0xFF00c950),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            Text(
+                                "${product.reviews.size} reviews",
+                                style = MaterialTheme.typography.labelMedium,
+                                lineHeight = MaterialTheme.typography.labelMedium.fontSize
+                            )
                         }
-                        Text(
-                            "Description",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            modifier = Modifier.padding(vertical = 16.dp)
+                        Spacer(modifier = Modifier.size(8.dp))
+
+                        PriceSection(
+                            discountedPrice = product.discountedPrice,
+                            originalPrice = product.price,
+                            discountPercentage = product.discountPercentage
                         )
-                        Text(
+
+                        Spacer(modifier = Modifier.size(16.dp))
+
+                        ReadMoreText(
                             text = product.description,
-                            style = MaterialTheme.typography.bodyMedium
+                            expanded = descExpanded,
+                            onExpandedChange = { descExpanded = it },
+                            style = MaterialTheme.typography.bodyMedium,
+                            readMoreText = "more",
+                            readMoreStyle = SpanStyle(
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            readMoreMaxLines = 3
                         )
                     }
 
                 }
 
                 item {
-                    HorizontalDivider()
-                    Text(
-                        text = "Dimensions: ${product.dimensions.width} x ${product.dimensions.height} x ${product.dimensions.depth}",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Text(text = "Weight: ${product.weight} Kg")
-                    Text(text = "Return Policy: ${product.returnPolicy}")
-                    Text(text = "Shipping Information: ${product.shippingInformation}")
-                    Text(text = "Warranty Information: ${product.warrantyInformation}")
-                    HorizontalDivider()
+                    Surface(
+                        modifier = Modifier.fillParentMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(top = 16.dp)
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            //HorizontalDivider()
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                            ) {
+                                InfoBox(
+                                    iconResId = R.drawable.ic_shipping,
+                                    text = product.shippingInformation,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                VerticalDivider(
+                                    modifier = Modifier
+                                        .height(32.dp)
+                                        .padding(horizontal = 8.dp)
+                                        .align(Alignment.CenterVertically)
+                                )
+                                InfoBox(
+                                    iconResId = R.drawable.ic_return,
+                                    text = product.returnPolicy,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                VerticalDivider(
+                                    modifier = Modifier
+                                        .height(32.dp)
+                                        .padding(horizontal = 8.dp)
+                                        .align(Alignment.CenterVertically)
+                                )
+                                InfoBox(
+                                    iconResId = R.drawable.ic_warranty,
+                                    text = product.warrantyInformation,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            //HorizontalDivider()
+                        }
+                    }
                 }
 
                 if (product.reviews.isNotEmpty()) {
@@ -223,6 +266,32 @@ fun ProductDetailScreen(
     }
 }
 
+@Composable
+private fun InfoBox(
+    iconResId: Int,
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
+    ) {
+        Icon(
+            painter = painterResource(iconResId),
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+    }
+
+}
 
 @Composable
 private fun ImageSlider(
@@ -257,14 +326,65 @@ private fun ImageSlider(
     }
 }
 
+@Composable
+private fun PriceSection(
+    originalPrice: Double,
+    discountedPrice: Double?,
+    discountPercentage: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.padding(top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = formatPrice(discountedPrice ?: originalPrice),
+            style = TextStyle(
+                fontSize = 30.sp,
+                lineHeight = 36.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        )
+
+        if (discountedPrice != null) {
+            Text(
+                text = formatPrice(originalPrice),
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    textDecoration = TextDecoration.LineThrough
+                )
+            )
+
+            DiscountText(discountPercentage = discountPercentage)
+        }
+    }
+}
+
+private fun LazyListScope.heroSection(
+    images: List<String>
+) {
+    item {
+        ImageSlider(
+            images = images,
+            modifier = Modifier
+                .fillParentMaxWidth()
+                .fillMaxHeight(0.5f)
+        )
+    }
+}
+
 private fun LazyListScope.reviewsSection(
     reviews: List<Review>
 ) {
     item {
+        HorizontalDivider()
         Text(
-            "Reviews (${reviews.size})",
+            "Customer Reviews (${reviews.size})",
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             modifier = Modifier
                 .fillParentMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
@@ -272,35 +392,52 @@ private fun LazyListScope.reviewsSection(
         )
     }
     items(reviews) { review ->
-        Column(
-            modifier = Modifier
-                .fillParentMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = 16.dp),
+        Surface(
+            modifier = Modifier.fillParentMaxWidth(),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            OutlinedCard(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 12.dp)
             ) {
-                Text(
-                    text = review.reviewerName,
-                    style = MaterialTheme.typography.titleSmall
-                )
+                Spacer(modifier = Modifier.size(12.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Avatar(name = review.reviewerName)
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .weight(1f)
+                    ) {
+                        Text(
+                            text = review.reviewerName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.size(4.dp))
+                        StarRating(rating = review.rating.toDouble())
+                    }
 
+                    Text(
+                        text = RelativeTimeFormatter.format(review.date),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.align(Alignment.Top)
+                    )
+                }
+                Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = RelativeTimeFormatter.format(review.date),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Normal,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    text = review.comment,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
+                Spacer(modifier = Modifier.size(12.dp))
             }
-            StarRating(rating = review.rating)
-            Spacer(modifier = Modifier.size(4.dp))
-            Text(
-                text = review.comment,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.size(16.dp))
         }
     }
 }
@@ -379,7 +516,7 @@ private fun QuantitySelector(
 
 @Composable
 private fun StarRating(
-    rating: Int,
+    rating: Double,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -391,18 +528,19 @@ private fun StarRating(
             Icon(
                 painter = painterResource(R.drawable.ic_star),
                 contentDescription = null,
-                tint = if (it < rating) MaterialTheme.colorScheme.primary else Color.Gray,
-                modifier = Modifier.size(12.dp)
+                tint = if (it < rating) Color(0xFFFFB900) else Color.Gray,
+                modifier = Modifier.size(14.dp)
             )
         }
 
         Spacer(modifier = Modifier.width(4.dp))
 
         Text(
-            text = "${rating}.0",
+            text = String.format("%.1f", rating),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            lineHeight = MaterialTheme.typography.labelMedium.fontSize
         )
     }
 }

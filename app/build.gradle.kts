@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.tbuonomo.dotsindicator)
+    implementation(libs.readmore.material3)
     ksp(libs.androidx.room.compiler)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.converter.gson)

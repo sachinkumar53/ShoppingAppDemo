@@ -16,6 +16,7 @@ composeBom = "2026.09.00"
 navigationCompose = "2.10.2"
 orbit = "12.0.1"
 paging = "3.5.1"
+readmoreMaterial3 = "1.9.0"
 retrofit = "3.0.0"
 ksp="2.3.10"
 hilt="2.60.1"
@@ -48,6 +49,7 @@ androidx-room-compiler = { group = "androidx.room3", name = "room3-compiler", ve
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 orbit-viewmodel = { module = "org.orbit-mvi:orbit-viewmodel", version.ref = "orbit" }
 orbit-compose = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" }
+readmore-material3 = { module = "com.webtoonscorp.android:readmore-material3", version.ref = "readmoreMaterial3" }
 retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }

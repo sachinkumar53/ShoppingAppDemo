@@ -221,7 +221,10 @@ private fun ProductListingCard(
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.size(8.dp))
-            FlowRow(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = formatPrice(product.discountedPrice ?: product.price),
                     style = MaterialTheme.typography.titleSmall
@@ -232,12 +235,10 @@ private fun ProductListingCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Normal,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        textDecoration = TextDecoration.LineThrough,
-                        modifier = Modifier.padding(start = 4.dp)
+                        textDecoration = TextDecoration.LineThrough
                     )
                     Text(
                         text = "${product.discountPercentage}% OFF",
-                        modifier = Modifier.padding(start = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFF00c950)
                     )
