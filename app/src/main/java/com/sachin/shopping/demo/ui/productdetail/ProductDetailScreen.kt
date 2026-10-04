@@ -170,13 +170,8 @@ fun ProductDetailScreen(
                             modifier = Modifier.padding(top = 4.dp)
                         ) {
                             StarRating(product.rating)
-                            VerticalDivider(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .height(16.dp)
-                            )
                             Text(
-                                "${product.reviews.size} reviews",
+                                " (${product.reviews.size})",
                                 style = MaterialTheme.typography.labelMedium,
                                 lineHeight = MaterialTheme.typography.labelMedium.fontSize
                             )
