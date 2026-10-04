@@ -2,6 +2,7 @@ package com.sachin.shopping.demo.ui.productlist
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,11 +45,13 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ProductListScreen(
+    onProductClick: (ProductListing) -> Unit,
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
     val paginatedProducts = viewModel.products.collectAsLazyPagingItems()
 
     ProductListScreen(
+        onProductClick = onProductClick,
         productListingItems = paginatedProducts
     )
 }
@@ -56,6 +59,7 @@ fun ProductListScreen(
 
 @Composable
 private fun ProductListScreen(
+    onProductClick: (ProductListing) -> Unit,
     productListingItems: LazyPagingItems<ProductListing>
 ) {
     Scaffold { innerPadding ->
@@ -75,7 +79,11 @@ private fun ProductListScreen(
                 productListingItems[index]?.let {
                     ProductListingCard(
                         product = it,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onProductClick(it)
+                            }
                     )
                 }
             }
