@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Shopping Demo</string>
+    <plurals name="subtotal_items">
+        <item quantity="one">Subtotal (%d item)</item>
+        <item quantity="other">Subtotal (%d items)</item>
+    </plurals>
 </resources>

@@ -53,10 +53,11 @@ class ProductRemoteMediator(
             val nextSkip = if (endReached) null else skip + response.products.size
 
             db.withWriteTransaction {
-                if (loadType == LoadType.REFRESH) {
+                /*if (loadType == LoadType.REFRESH) {
                     productDao.clearAll()
                     keyDao.clear()
-                }
+                }*/
+
                 productDao.upsertAll(
                     response.products.map { it.toEntity() }
                 )

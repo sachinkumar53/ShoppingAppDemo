@@ -54,7 +54,7 @@ class ProductDetailViewModel @Inject constructor(
             if (quantity <= 0) {
                 cartRepository.remove(args.productId)
             } else {
-                cartRepository.upsert(args.productId, quantity)
+                cartRepository.setQuantity(args.productId, quantity)
             }
         }
     }

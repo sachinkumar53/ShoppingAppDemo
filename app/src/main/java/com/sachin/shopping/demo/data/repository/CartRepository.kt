@@ -1,7 +1,6 @@
 package com.sachin.shopping.demo.data.repository
 
 import com.sachin.shopping.demo.data.local.dao.CartItemDao
-import com.sachin.shopping.demo.data.local.entity.CartItemEntity
 import com.sachin.shopping.demo.data.mapper.toModel
 import com.sachin.shopping.demo.data.model.CartItem
 import kotlinx.coroutines.flow.Flow
@@ -12,6 +11,9 @@ class CartRepository @Inject constructor(
     private val cartItemDao: CartItemDao
 ) {
 
+    val lines = cartItemDao.observeLines()
+    val itemCount = cartItemDao.observeItemCount()
+
     fun observeCart(): Flow<List<CartItem>> {
         return cartItemDao.observeCart().mapLatest { cartItems ->
             cartItems.map { entity -> entity.toModel() }
@@ -20,8 +22,8 @@ class CartRepository @Inject constructor(
 
     fun observeQuantity(productId: Int) = cartItemDao.observeQuantity(productId)
 
-    suspend fun upsert(productId: Int, quantity: Int = 1) {
-        cartItemDao.upsert(CartItemEntity(productId, quantity))
+    suspend fun setQuantity(productId: Int, quantity: Int) {
+        cartItemDao.setQuantity(productId, quantity)
     }
 
     suspend fun remove(productId: Int) {

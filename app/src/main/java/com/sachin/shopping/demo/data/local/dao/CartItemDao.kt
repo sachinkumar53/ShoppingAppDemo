@@ -5,10 +5,20 @@ import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Upsert
 import com.sachin.shopping.demo.data.local.entity.CartItemEntity
+import com.sachin.shopping.demo.data.local.projection.CartLine
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CartItemDao {
+
+    @Query("""
+        SELECT c.productId, c.quantity, p.title, p.brand, p.thumbnail,
+               p.price, p.discountPercentage, p.stock, p.minimumOrderQuantity
+        FROM cart_items c
+        INNER JOIN products p ON p.id = c.productId
+        ORDER BY c.addedAt DESC
+    """)
+    fun observeLines(): Flow<List<CartLine>>
 
     @Query("SELECT * FROM cart_items")
     fun observeCart(): Flow<List<CartItemEntity>>
@@ -21,6 +31,9 @@ interface CartItemDao {
 
     @Upsert
     suspend fun upsert(item: CartItemEntity)
+
+    @Query("UPDATE cart_items SET quantity = :quantity WHERE productId = :productId")
+    suspend fun setQuantity(productId: Int, quantity: Int)
 
     @Query("DELETE FROM cart_items WHERE productId = :productId")
     suspend fun delete(productId: Int)

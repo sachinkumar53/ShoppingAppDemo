@@ -61,6 +61,7 @@ import coil3.compose.AsyncImage
 import com.sachin.shopping.demo.R
 import com.sachin.shopping.demo.data.model.Review
 import com.sachin.shopping.demo.ui.component.Avatar
+import com.sachin.shopping.demo.ui.component.BrandText
 import com.sachin.shopping.demo.ui.component.DiscountText
 import com.sachin.shopping.demo.ui.component.QuantitySelector
 import com.sachin.shopping.demo.util.RelativeTimeFormatter
@@ -186,14 +187,7 @@ fun ProductDetailScreen(
                     ) {
                         Spacer(Modifier.size(16.dp))
                         product.brand?.let { brand ->
-                            Text(
-                                text = brand.map { it.uppercase() }.joinToString(""),
-                                style = TextStyle(
-                                    fontSize = 11.sp,
-                                    lineHeight = 16.sp,
-                                    letterSpacing = 2.5.sp
-                                )
-                            )
+                            BrandText(brand = brand)
                         }
                         Spacer(modifier = Modifier.size(6.dp))
                         Text(

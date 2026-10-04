@@ -15,7 +15,7 @@ import com.sachin.shopping.demo.data.local.entity.ProductRemoteKey
         ProductEntity::class,
         ProductRemoteKey::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
