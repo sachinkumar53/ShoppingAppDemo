@@ -23,6 +23,12 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "app-database.db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration() // STOPSHIP: Remove this line in production, as it will delete the database on schema changes
+            .build()
     }
+
+    @Singleton
+    @Provides
+    fun provideCartItemDao(appDatabase: AppDatabase) = appDatabase.cartItemDao()
 }
