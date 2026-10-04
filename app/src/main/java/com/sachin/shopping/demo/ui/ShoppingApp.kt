@@ -4,10 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.sachin.shopping.demo.ui.navigation.CartRoute
 import com.sachin.shopping.demo.ui.navigation.ProductDetailRoute
 import com.sachin.shopping.demo.ui.navigation.ProductListRoute
 import com.sachin.shopping.demo.ui.productdetail.ProductDetailScreen
 import com.sachin.shopping.demo.ui.productlist.ProductListScreen
+import com.sachin.shopping.demo.ui.shoppingcart.CartScreen
 
 @Composable
 fun ShoppingApp() {
@@ -26,6 +28,15 @@ fun ShoppingApp() {
 
         composable<ProductDetailRoute> {
             ProductDetailScreen(
+                navigateBack = navController::navigateUp,
+                navigateToCart = {
+                    navController.navigate(CartRoute)
+                }
+            )
+        }
+
+        composable<CartRoute> {
+            CartScreen(
                 navigateBack = navController::navigateUp
             )
         }

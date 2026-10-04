@@ -2,13 +2,21 @@ package com.sachin.shopping.demo.data.repository
 
 import com.sachin.shopping.demo.data.local.dao.CartItemDao
 import com.sachin.shopping.demo.data.local.entity.CartItemEntity
+import com.sachin.shopping.demo.data.mapper.toModel
+import com.sachin.shopping.demo.data.model.CartItem
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapLatest
 import javax.inject.Inject
 
 class CartRepository @Inject constructor(
     private val cartItemDao: CartItemDao
 ) {
 
-    fun observeCart() = cartItemDao.observeCart()
+    fun observeCart(): Flow<List<CartItem>> {
+        return cartItemDao.observeCart().mapLatest { cartItems ->
+            cartItems.map { entity -> entity.toModel() }
+        }
+    }
 
     fun observeQuantity(productId: Int) = cartItemDao.observeQuantity(productId)
 

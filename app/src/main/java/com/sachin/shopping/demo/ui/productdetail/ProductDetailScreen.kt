@@ -74,6 +74,7 @@ import org.orbitmvi.orbit.compose.collectAsState
 @Composable
 fun ProductDetailScreen(
     navigateBack: () -> Unit,
+    navigateToCart: () -> Unit,
     viewModel: ProductDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.collectAsState()
@@ -138,7 +139,7 @@ fun ProductDetailScreen(
                             modifier = Modifier.weight(1f),
                             onClick = {
                                 if (state.quantity > 0) {
-                                    //TODO: Navigate to Cart
+                                    navigateToCart()
                                 } else {
                                     viewModel.onQuantityChange(1)
                                 }
