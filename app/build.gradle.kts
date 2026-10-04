@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.paging)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.tbuonomo.dotsindicator)
     implementation(libs.readmore.material3)

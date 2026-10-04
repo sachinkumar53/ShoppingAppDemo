@@ -31,4 +31,8 @@ object DatabaseModule {
     @Singleton
     @Provides
     fun provideCartItemDao(appDatabase: AppDatabase) = appDatabase.cartItemDao()
+
+    @Singleton
+    @Provides
+    fun provideProductDao(appDatabase: AppDatabase) = appDatabase.productDao()
 }
