@@ -7,8 +7,10 @@ import androidx.navigation.compose.rememberNavController
 import com.sachin.shopping.demo.ui.navigation.CartRoute
 import com.sachin.shopping.demo.ui.navigation.ProductDetailRoute
 import com.sachin.shopping.demo.ui.navigation.ProductListRoute
+import com.sachin.shopping.demo.ui.navigation.SearchRoute
 import com.sachin.shopping.demo.ui.productdetail.ProductDetailScreen
 import com.sachin.shopping.demo.ui.productlist.ProductListScreen
+import com.sachin.shopping.demo.ui.search.SearchScreen
 import com.sachin.shopping.demo.ui.shoppingcart.CartScreen
 
 @Composable
@@ -20,6 +22,9 @@ fun ShoppingApp() {
     ) {
         composable<ProductListRoute> {
             ProductListScreen(
+                navigateToSearch = {
+                    navController.navigate(SearchRoute)
+                },
                 onProductClick = { product ->
                     navController.navigate(ProductDetailRoute(productId = product.id))
                 }
@@ -39,6 +44,10 @@ fun ShoppingApp() {
             CartScreen(
                 navigateBack = navController::navigateUp
             )
+        }
+
+        composable<SearchRoute> {
+            SearchScreen()
         }
     }
 }

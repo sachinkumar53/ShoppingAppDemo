@@ -11,3 +11,6 @@ data class ProductDetailRoute(val productId: Int)
 
 @Serializable
 data object CartRoute
+
+@Serializable
+data object SearchRoute

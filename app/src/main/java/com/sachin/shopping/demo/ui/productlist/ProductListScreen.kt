@@ -52,12 +52,14 @@ import com.sachin.shopping.demo.util.formatPrice
 
 @Composable
 fun ProductListScreen(
+    navigateToSearch: () -> Unit,
     onProductClick: (ProductListing) -> Unit,
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
     val paginatedProducts = viewModel.products.collectAsLazyPagingItems()
 
     ProductListScreen(
+        navigateToSearch = navigateToSearch,
         onProductClick = onProductClick,
         productListingItems = paginatedProducts
     )
@@ -66,15 +68,14 @@ fun ProductListScreen(
 
 @Composable
 private fun ProductListScreen(
+    navigateToSearch: () -> Unit,
     onProductClick: (ProductListing) -> Unit,
     productListingItems: LazyPagingItems<ProductListing>
 ) {
     Scaffold(
         topBar = {
             SearchBarPlaceholder(
-                onClick = {
-                    // TODO: Navigate to search screen
-                },
+                onClick = navigateToSearch,
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.statusBars)
                     .padding(horizontal = 16.dp)
