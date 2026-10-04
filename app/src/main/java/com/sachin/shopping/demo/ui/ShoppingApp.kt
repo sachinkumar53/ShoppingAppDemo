@@ -25,7 +25,9 @@ fun ShoppingApp() {
         }
 
         composable<ProductDetailRoute> {
-            ProductDetailScreen()
+            ProductDetailScreen(
+                navigateBack = navController::navigateUp
+            )
         }
     }
 }

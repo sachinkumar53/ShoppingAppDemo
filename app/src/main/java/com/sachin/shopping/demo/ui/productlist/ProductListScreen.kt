@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,8 +29,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,7 +45,7 @@ import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.sachin.shopping.demo.R
 import com.sachin.shopping.demo.data.model.ProductListing
-import kotlin.math.roundToInt
+import com.sachin.shopping.demo.util.formatPrice
 
 @Composable
 fun ProductListScreen(
@@ -68,8 +72,8 @@ private fun ProductListScreen(
                 .padding(innerPadding)
                 .fillMaxSize(),
             columns = StaggeredGridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalItemSpacing = 12.dp,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalItemSpacing = 8.dp,
             contentPadding = PaddingValues(16.dp)
         ) {
             items(
@@ -217,18 +221,25 @@ private fun ProductListingCard(
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.size(8.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
+            FlowRow(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "$${product.price}",
+                    text = formatPrice(product.discountedPrice ?: product.price),
                     style = MaterialTheme.typography.titleSmall
                 )
-
-                product.discountPercentage?.roundToInt()?.takeIf { it > 0 }?.let {
+                if (product.discountedPrice != null) {
                     Text(
-                        text = "$it% off",
-                        modifier = Modifier.padding(start = 8.dp),
+                        text = formatPrice(product.price),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        fontWeight = FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        textDecoration = TextDecoration.LineThrough,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                    Text(
+                        text = "${product.discountPercentage}% OFF",
+                        modifier = Modifier.padding(start = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF00c950)
                     )
                 }
             }

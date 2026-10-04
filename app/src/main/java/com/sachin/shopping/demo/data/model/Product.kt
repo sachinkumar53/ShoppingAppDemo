@@ -6,7 +6,7 @@ data class Product(
     val description: String,
     val category: String,
     val price: Double,
-    val discountPercentage: Double,
+    val discountPercentage: Int,
     val rating: Double,
     val stock: Int,
     val tags: List<String>,
@@ -23,7 +23,9 @@ data class Product(
     val meta: Meta,
     val thumbnail: String,
     val images: List<String>
-)
+) {
+    val discountedPrice = discountPercentage.takeIf { it > 0 }?.let { price * (1 - it / 100.0) }
+}
 
 data class Dimensions(
     val width: Double,

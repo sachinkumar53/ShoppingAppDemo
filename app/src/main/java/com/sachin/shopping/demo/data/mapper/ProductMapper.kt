@@ -5,10 +5,11 @@ import com.sachin.shopping.demo.data.model.Meta
 import com.sachin.shopping.demo.data.model.Product
 import com.sachin.shopping.demo.data.model.ProductListing
 import com.sachin.shopping.demo.data.model.Review
-import com.sachin.shopping.demo.data.remote.dto.Product as ProductDto
+import kotlin.math.roundToInt
 import com.sachin.shopping.demo.data.remote.dto.Dimensions as DimensionsDto
-import com.sachin.shopping.demo.data.remote.dto.Review as ReviewDto
 import com.sachin.shopping.demo.data.remote.dto.Meta as MetaDto
+import com.sachin.shopping.demo.data.remote.dto.Product as ProductDto
+import com.sachin.shopping.demo.data.remote.dto.Review as ReviewDto
 
 fun ProductDto.toProductListing() = ProductListing(
     id = id,
@@ -17,7 +18,7 @@ fun ProductDto.toProductListing() = ProductListing(
     rating = rating,
     thumbnail = thumbnail,
     brand = brand,
-    discountPercentage = discountPercentage,
+    discountPercentage = discountPercentage.roundToInt(),
     inStock = stock > 0
 )
 
@@ -28,7 +29,7 @@ fun ProductDto.toModel(): Product {
         description = description,
         category = category,
         price = price,
-        discountPercentage = discountPercentage,
+        discountPercentage = discountPercentage.roundToInt(),
         rating = rating,
         stock = stock,
         tags = tags,
