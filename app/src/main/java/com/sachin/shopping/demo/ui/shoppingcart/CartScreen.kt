@@ -35,7 +35,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.sachin.shopping.demo.R
 import com.sachin.shopping.demo.ui.component.BrandText
+import com.sachin.shopping.demo.ui.component.CenteredMessage
 import com.sachin.shopping.demo.ui.component.QuantitySelector
+import com.sachin.shopping.demo.ui.component.loadingIndicator
 import com.sachin.shopping.demo.util.formatPrice
 import org.orbitmvi.orbit.compose.collectAsState
 
@@ -60,26 +62,30 @@ fun CartScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = {
-                        viewModel.onClearCartClick()
-                    }) {
-                        Text(
-                            text = "Clear all",
-                            color = Color(0xFFFB2C36)
-                        )
+                    if (state.items.isNotEmpty()) {
+                        TextButton(onClick = {
+                            viewModel.onClearCartClick()
+                        }) {
+                            Text(
+                                text = "Clear all",
+                                color = Color(0xFFFB2C36)
+                            )
+                        }
                     }
                 }
             )
         },
         bottomBar = {
-            Surface {
-                Button(
-                    onClick = {},
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth()
-                ) {
-                    Text(text = "Proceed to Checkout")
+            if (state.items.isNotEmpty()){
+                Surface {
+                    Button(
+                        onClick = {},
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(text = "Proceed to Checkout")
+                    }
                 }
             }
         }
@@ -89,61 +95,72 @@ fun CartScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
         ) {
-            items(state.items) {
-                Card(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(bottom = 8.dp)
-                ) {
-                    Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        AsyncImage(
-                            model = it.thumbnail,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(100.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                    MaterialTheme.shapes.medium
-                                )
-                        )
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 16.dp)
-                        ) {
-                            it.brand?.let { brand ->
-                                BrandText(brand = brand)
-                                Spacer(modifier = Modifier.size(4.dp))
-                            }
-
-                            Text(
-                                text = it.title,
-                                style = MaterialTheme.typography.titleMedium
+            if (state.isLoading) {
+                loadingIndicator()
+            } else if (state.items.isEmpty()) {
+                item {
+                    CenteredMessage(
+                        text = "No items in cart",
+                        modifier = Modifier.fillParentMaxSize()
+                    )
+                }
+            } else {
+                items(state.items) {
+                    Card(
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .padding(bottom = 8.dp)
+                    ) {
+                        Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                            AsyncImage(
+                                model = it.thumbnail,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        MaterialTheme.shapes.medium
+                                    )
                             )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(start = 16.dp)
                             ) {
-                                QuantitySelector(
-                                    quantity = it.quantity,
-                                    onQuantityChange = { qty ->
-                                        viewModel.onQuantityChange(it.productId, qty)
-                                    }
-                                )
+                                it.brand?.let { brand ->
+                                    BrandText(brand = brand)
+                                    Spacer(modifier = Modifier.size(4.dp))
+                                }
 
                                 Text(
-                                    text = formatPrice(it.lineTotal),
-                                    style = MaterialTheme.typography.titleLarge
+                                    text = it.title,
+                                    style = MaterialTheme.typography.titleMedium
                                 )
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    QuantitySelector(
+                                        quantity = it.quantity,
+                                        onQuantityChange = { qty ->
+                                            viewModel.onQuantityChange(it.productId, qty)
+                                        }
+                                    )
+
+                                    Text(
+                                        text = formatPrice(it.lineTotal),
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
 
-            if (state.items.isNotEmpty()){
+            if (state.items.isNotEmpty()) {
                 item {
                     OrderSummaryCard(
                         summary = state.summary,
