@@ -47,7 +47,12 @@ fun ShoppingApp() {
         }
 
         composable<SearchRoute> {
-            SearchScreen()
+            SearchScreen(
+                onBack = navController::navigateUp,
+                onProductClick = { productId ->
+                    navController.navigate(ProductDetailRoute(productId = productId))
+                }
+            )
         }
     }
 }

@@ -7,6 +7,8 @@ import androidx.room3.Query
 import androidx.room3.Upsert
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import com.sachin.shopping.demo.data.local.entity.ProductEntity
+import com.sachin.shopping.demo.data.model.ProductListItem
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 @DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
@@ -26,6 +28,19 @@ interface ProductDao {
 
     @Upsert
     suspend fun upsert(product: ProductEntity)
+
+    @Query(
+        """
+    SELECT id, title, brand, thumbnail, price, discountPercentage, rating
+    FROM products
+    WHERE title LIKE '%' || :query || '%' ESCAPE '\'
+       OR brand LIKE '%' || :query || '%' ESCAPE '\'
+       OR category LIKE '%' || :query || '%' ESCAPE '\'
+    ORDER BY rating DESC
+    LIMIT 50
+    """
+    )
+    fun search(query: String): Flow<List<ProductListItem>>
 
     @Query("DELETE FROM products")
     suspend fun clearAll()
