@@ -3,6 +3,7 @@ package com.sachin.shopping.demo.ui.shoppingcart
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -76,7 +77,7 @@ fun CartScreen(
             )
         },
         bottomBar = {
-            if (state.items.isNotEmpty()){
+            if (state.items.isNotEmpty()) {
                 Surface {
                     Button(
                         onClick = {},
@@ -91,9 +92,8 @@ fun CartScreen(
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+            modifier = Modifier.padding(innerPadding),
+            contentPadding = PaddingValues(16.dp)
         ) {
             if (state.isLoading) {
                 loadingIndicator()

@@ -9,7 +9,6 @@ import com.sachin.shopping.demo.data.mapper.toProductListing
 import com.sachin.shopping.demo.data.model.ProductListing
 import com.sachin.shopping.demo.data.repository.CartRepository
 import com.sachin.shopping.demo.data.repository.ProductRepository
-import com.sachin.shopping.demo.ui.shoppingcart.toSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -32,10 +31,7 @@ class ProductListViewModel @Inject constructor(
         intent {
             cartRepository.lines.collect { lines ->
                 reduce {
-                    state.copy(
-                        cartCount = lines.sumOf { it.quantity },
-                        cartTotal = lines.toSummary().total
-                    )
+                    state.copy(cartCount = lines.sumOf { it.quantity })
                 }
             }
         }
@@ -45,6 +41,5 @@ class ProductListViewModel @Inject constructor(
 data class ProductListUiState(
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null,
-    val cartCount: Int = 0,
-    val cartTotal: Double = 0.0
+    val cartCount: Int = 0
 )

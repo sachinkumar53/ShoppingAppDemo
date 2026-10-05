@@ -1,11 +1,6 @@
 package com.sachin.shopping.demo.ui.productlist
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,14 +23,16 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -43,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -90,142 +86,164 @@ private fun ProductListScreen(
 ) {
     Scaffold(
         topBar = {
-            SearchBarPlaceholder(
-                onClick = navigateToSearch,
-                modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 32.dp)
+            TopBar(
+                navigateToSearch = navigateToSearch,
+                navigateToCart = navigateToCart,
+                cartCount = state.cartCount
             )
-        },
-        bottomBar = {
-            AnimatedVisibility(
-                visible = state.cartCount > 0,
-                enter = fadeIn() + slideInVertically(initialOffsetY = { fullHeight -> fullHeight }),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = { fullHeight -> fullHeight })
-            ) {
-                OutlinedCard(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+        }
+    ) { innerPadding ->
+        ProductGrid(
+            items = productListingItems,
+            modifier = Modifier.padding(innerPadding),
+            onProductClick = onProductClick
+        )
+    }
+}
 
-                        Column {
-                            Text(
-                                text = pluralStringResource(R.plurals.cart_items, state.cartCount, state.cartCount),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
-                            Spacer(modifier = Modifier.size(4.dp))
-                            Text(
-                                text = formatPrice(state.cartTotal),
-                                style = MaterialTheme.typography.titleMedium
+@Composable
+private fun ProductGrid(
+    items: LazyPagingItems<ProductListing>,
+    onProductClick: (ProductListing) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val states = items.loadState
+    val isEmpty = items.itemCount == 0
+
+    val showError = isEmpty && states.refresh is LoadState.Error
+    val showEmpty = isEmpty &&
+            states.refresh is LoadState.NotLoading &&
+            states.source.refresh is LoadState.NotLoading &&
+            states.append.endOfPaginationReached
+    val showLoader = isEmpty && !showError && !showEmpty
+
+    Box(modifier = modifier.fillMaxSize()) {
+        when {
+            showLoader -> {
+                CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
+
+            showError -> {
+                Column(
+                    Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Couldn't load products")
+                    TextButton(onClick = { items.retry() }) { Text("Retry") }
+                }
+            }
+
+            showEmpty -> {
+                Text(
+                    text = "No products found",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            else -> {
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Fixed(2),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalItemSpacing = 12.dp,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    items(items.itemCount, key = items.itemKey { it.id }) { i ->
+                        items[i]?.let { product ->
+                            ProductListingCard(
+                                product = product,
+                                modifier = Modifier.clickable {
+                                    onProductClick(product)
+                                }
                             )
                         }
+                    }
 
-                        Button(onClick = navigateToCart) {
-                            Text("View cart")
-                            Icon(
-                                painter = painterResource(R.drawable.ic_arrow_right),
-                                contentDescription = null,
+                    when (items.loadState.append) {
+                        is LoadState.Loading -> item(span = StaggeredGridItemSpan.FullLine) {
+                            Box(
                                 modifier = Modifier
-                                    .size(20.dp)
-                                    .offset(x = 4.dp)
-                            )
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
                         }
+
+                        is LoadState.Error -> item(span = StaggeredGridItemSpan.FullLine) {
+                            TextButton(onClick = { items.retry() }) { Text("Retry") }
+                        }
+
+                        else -> Unit
                     }
                 }
             }
         }
-    ) { innerPadding ->
-        LazyVerticalStaggeredGrid(
+    }
+}
+
+@Composable
+private fun TopBar(
+    navigateToCart: () -> Unit,
+    navigateToSearch: () -> Unit,
+    cartCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Surface(modifier = modifier) {
+        Column(
             modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            columns = StaggeredGridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalItemSpacing = 8.dp,
-            contentPadding = PaddingValues(16.dp)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = 16.dp)
         ) {
-            items(
-                productListingItems.itemCount,
-                key = productListingItems.itemKey { it.id }
-            ) { index ->
-                productListingItems[index]?.let {
-                    ProductListingCard(
-                        product = it,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onProductClick(it)
-                            }
-                    )
-                }
-            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Shopping",
+                    style = MaterialTheme.typography.titleLarge
+                )
 
-            // Initial loading
-            when (productListingItems.loadState.refresh) {
-                is LoadState.Error -> {
-                    item(span = StaggeredGridItemSpan.FullLine) {
-                        Button(onClick = {
-                            // TODO: Implement retry logic
-                        }) {
-                            Text("Retry")
+                BadgedBox(
+                    badge = {
+                        if (cartCount > 0) {
+                            Text(
+                                text = cartCount.toString(),
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier
+                                    .offset(x = (-8).dp, y = (8).dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        shape = CircleShape
+                                    )
+                                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
                         }
-                    }
-                }
-
-                LoadState.Loading -> {
-                    item(
-                        span = StaggeredGridItemSpan.FullLine
+                    }) {
+                    Card(
+                        onClick = navigateToCart,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-
-                            CircularProgressIndicator()
-                        }
+                        Icon(
+                            painter = painterResource(R.drawable.ic_cart),
+                            contentDescription = null,
+                            modifier = Modifier.padding(8.dp)
+                        )
                     }
-                }
-
-                else -> {
-
                 }
             }
-
-            when (productListingItems.loadState.append) {
-                is LoadState.Error -> {
-                    item(span = StaggeredGridItemSpan.FullLine) {
-                        Button(onClick = {
-                            // TODO: Implement retry logic
-                        }) {
-                            Text("Retry")
-                        }
-                    }
-                }
-
-                LoadState.Loading -> {
-                    item(
-                        span = StaggeredGridItemSpan.FullLine
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-
-                            CircularProgressIndicator()
-                        }
-                    }
-                }
-
-                else -> {
-
-                }
-            }
+            Spacer(modifier = Modifier.size(8.dp))
+            SearchBarPlaceholder(onClick = navigateToSearch)
+            Spacer(modifier = Modifier.size(16.dp))
         }
     }
 }
@@ -256,7 +274,7 @@ private fun ProductListingCard(
                     .padding(8.dp)
                     .align(Alignment.BottomStart)
                     .background(
-                        MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+                        MaterialTheme.colorScheme.surfaceContainerHighest,
                         CircleShape
                     )
                     .padding(horizontal = 8.dp, vertical = 4.dp),

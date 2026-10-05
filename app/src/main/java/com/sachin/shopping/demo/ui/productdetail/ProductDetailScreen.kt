@@ -158,13 +158,14 @@ private fun BackButtonTopBar(
             modifier = Modifier
                 .padding(start = 16.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.surface,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
                     shape = CircleShape
                 )
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_arrow_back),
-                contentDescription = null
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -179,7 +180,6 @@ private fun BottomBar(
     stock: Int
 ) {
     Surface(
-        shadowElevation = 12.dp,
         color = MaterialTheme.colorScheme.surface,
         modifier = modifier
     ) {
@@ -227,7 +227,7 @@ private fun BottomBar(
                     modifier = Modifier.padding(end = 8.dp)
                 )
                 Text(
-                    if (quantity > 0) "Go to Cart" else "Add to Cart"
+                    if (quantity > 0) "View Cart" else "Add to Cart"
                 )
             }
         }
