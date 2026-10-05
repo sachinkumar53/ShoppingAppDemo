@@ -11,13 +11,15 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CartItemDao {
 
-    @Query("""
+    @Query(
+        """
         SELECT c.productId, c.quantity, p.title, p.brand, p.thumbnail,
                p.price, p.discountPercentage, p.stock, p.minimumOrderQuantity
         FROM cart_items c
         INNER JOIN products p ON p.id = c.productId
         ORDER BY c.addedAt DESC
-    """)
+    """
+    )
     fun observeLines(): Flow<List<CartLine>>
 
     @Query("SELECT * FROM cart_items")
@@ -33,7 +35,7 @@ interface CartItemDao {
     suspend fun upsert(item: CartItemEntity)
 
     @Query("UPDATE cart_items SET quantity = :quantity WHERE productId = :productId")
-    suspend fun setQuantity(productId: Int, quantity: Int)
+    suspend fun updateQuantity(productId: Int, quantity: Int)
 
     @Query("DELETE FROM cart_items WHERE productId = :productId")
     suspend fun delete(productId: Int)
@@ -49,4 +51,24 @@ interface CartItemDao {
 
     @Query("SELECT quantity FROM cart_items WHERE productId = :productId")
     fun observeQuantity(productId: Int): Flow<Int?>
+
+    @Query("SELECT stock FROM products WHERE id = :productId")
+    suspend fun getStock(productId: Int): Int?
+
+    @Transaction
+    suspend fun setQuantity(productId: Int, quantity: Int) {
+        if (quantity <= 0) {
+            delete(productId)
+            return
+        }
+        val stock = getStock(productId) ?: return
+
+        val capped = quantity.coerceAtMost(stock)
+
+        if (getQuantity(productId) == null) {
+            upsert(CartItemEntity(productId, capped))
+        } else {
+            updateQuantity(productId, capped)
+        }
+    }
 }

@@ -143,11 +143,13 @@ fun CartScreen(
                 }
             }
 
-            item {
-                OrderSummaryCard(
-                    summary = state.summary,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+            if (state.items.isNotEmpty()){
+                item {
+                    OrderSummaryCard(
+                        summary = state.summary,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
             }
         }
     }

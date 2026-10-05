@@ -68,11 +68,7 @@ class ProductDetailViewModel @Inject constructor(
 
     fun onQuantityChange(quantity: Int) = intent {
         quantityMutex.withLock {
-            if (quantity <= 0) {
-                cartRepository.remove(args.productId)
-            } else {
-                cartRepository.setQuantity(args.productId, quantity)
-            }
+            cartRepository.setQuantity(args.productId, quantity)
         }
     }
 

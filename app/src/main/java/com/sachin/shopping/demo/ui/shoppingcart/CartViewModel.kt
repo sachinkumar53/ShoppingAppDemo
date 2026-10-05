@@ -4,16 +4,17 @@ import androidx.lifecycle.ViewModel
 import com.sachin.shopping.demo.data.local.projection.CartLine
 import com.sachin.shopping.demo.data.repository.CartRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.orbitmvi.orbit.OrbitContainerHost
 import org.orbitmvi.orbit.viewmodel.orbitContainer
 import javax.inject.Inject
-import kotlin.math.roundToLong
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
     private val cartRepository: CartRepository
 ) : ViewModel(), OrbitContainerHost<CartUiState, CartUiState, Nothing> {
-
+    private val quantityMutex = Mutex()
     override val container = orbitContainer<CartUiState, Nothing>(CartUiState()) {
         intent {
             cartRepository.lines.collect { lines ->
@@ -33,15 +34,18 @@ class CartViewModel @Inject constructor(
     }
 
     fun onQuantityChange(productId: Int, qty: Int) = intent {
-        cartRepository.setQuantity(productId, qty)
+        quantityMutex.withLock {
+            cartRepository.setQuantity(productId, qty)
+        }
     }
 }
 
 data class CartUiState(
     val isLoading: Boolean = true,
     val items: List<CartLine> = emptyList(),
-    val summary: CartSummary = CartSummary(0,0.0,0.0)
+    val summary: CartSummary = CartSummary(0, 0.0, 0.0)
 )
+
 data class CartSummary(
     val unitCount: Int,
     val subtotal: Double,    // sum of original prices x qty
