@@ -9,8 +9,11 @@ import com.sachin.shopping.demo.data.mapper.toModel
 import com.sachin.shopping.demo.data.model.Product
 import com.sachin.shopping.demo.data.paging.ProductRemoteMediator
 import com.sachin.shopping.demo.data.remote.ApiService
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 
 @Singleton
 class ProductRepository @Inject constructor(
@@ -25,14 +28,17 @@ class ProductRepository @Inject constructor(
         pagingSourceFactory = { db.productDao().pagingSource() }
     ).flow
 
-    suspend fun getProductDetail(productId: Int): Product {
-        return try {
-            val remote = apiService.getProduct(productId).toModel()
-            db.productDao().upsert(remote.toEntity())
-            remote
-        } catch (e: Exception) {
-            val cached = db.productDao().getProduct(productId)
-            cached?.toModel() ?: throw e
-        }
+    fun observeProduct(id: Int): Flow<Product?> {
+        return db.productDao().observe(id).map { it?.toModel() }
+    }
+
+    suspend fun refreshProduct(id: Int): Result<Unit> = try {
+        val remote = apiService.getProduct(id).toModel()
+        db.productDao().upsert(remote.toEntity())
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 }

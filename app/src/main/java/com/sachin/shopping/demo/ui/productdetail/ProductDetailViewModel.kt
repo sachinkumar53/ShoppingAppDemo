@@ -18,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ProductDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    productRepository: ProductRepository,
+    private val productRepository: ProductRepository,
     private val cartRepository: CartRepository
 ) : ViewModel(), OrbitContainerHost<ProductDetailState, ProductDetailState, Nothing> {
     private val args = savedStateHandle.toRoute<ProductDetailRoute>()
@@ -28,11 +28,23 @@ class ProductDetailViewModel @Inject constructor(
         ProductDetailState(isLoading = true)
     ) {
         intent {
-            val product = productRepository.getProductDetail(args.productId)
+            productRepository.observeProduct(args.productId).collectLatest { product ->
+                if (product == null) {
+                    reduce {
+                        state.copy(
+                            product = null,
+                            error = "No product found with id ${args.productId}"
+                        )
+                    }
+                } else {
+                    reduce { state.copy(product = product, error = null) }
+                }
+            }
+        }
+        intent {
             val quantity = cartRepository.getQuantity(args.productId)
             reduce {
                 state.copy(
-                    product = product,
                     quantity = quantity ?: 0,
                     isLoading = false
                 )
@@ -47,6 +59,11 @@ class ProductDetailViewModel @Inject constructor(
                 }
             }
         }
+
+        intent {
+            // Refresh the product from server in background
+            productRepository.refreshProduct(args.productId)
+        }
     }
 
     fun onQuantityChange(quantity: Int) = intent {
@@ -55,6 +72,17 @@ class ProductDetailViewModel @Inject constructor(
                 cartRepository.remove(args.productId)
             } else {
                 cartRepository.setQuantity(args.productId, quantity)
+            }
+        }
+    }
+
+    fun loadProduct() {
+        intent {
+            reduce { state.copy(error = null, isLoading = true) }
+            productRepository.refreshProduct(args.productId).onSuccess {
+                reduce { state.copy(error = null, isLoading = false) }
+            }.onFailure {
+                reduce { state.copy(error = "Failed to load product", isLoading = false) }
             }
         }
     }

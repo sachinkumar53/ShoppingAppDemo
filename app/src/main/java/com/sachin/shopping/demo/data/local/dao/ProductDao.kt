@@ -29,6 +29,9 @@ interface ProductDao {
     @Upsert
     suspend fun upsert(product: ProductEntity)
 
+    @Query("SELECT * FROM products WHERE id = :id")
+    fun observe(id: Int): Flow<ProductEntity?>
+
     @Query(
         """
     SELECT id, title, brand, thumbnail, price, discountPercentage, rating

@@ -6,40 +6,24 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,29 +31,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import coil3.compose.AsyncImage
 import com.sachin.shopping.demo.R
-import com.sachin.shopping.demo.data.model.Review
-import com.sachin.shopping.demo.ui.component.Avatar
-import com.sachin.shopping.demo.ui.component.BrandText
-import com.sachin.shopping.demo.ui.component.DiscountText
+import com.sachin.shopping.demo.ui.component.CenteredMessage
 import com.sachin.shopping.demo.ui.component.QuantitySelector
-import com.sachin.shopping.demo.util.RelativeTimeFormatter
-import com.sachin.shopping.demo.util.formatPrice
-import com.tbuonomo.viewpagerdotsindicator.compose.DotsIndicator
-import com.tbuonomo.viewpagerdotsindicator.compose.model.DotGraphic
-import com.tbuonomo.viewpagerdotsindicator.compose.type.ShiftIndicatorType
-import com.webtoonscorp.android.readmore.material3.ReadMoreText
+import com.sachin.shopping.demo.ui.component.loadingIndicator
+import com.sachin.shopping.demo.ui.productdetail.component.additionalInfoSection
+import com.sachin.shopping.demo.ui.productdetail.component.detailSection
+import com.sachin.shopping.demo.ui.productdetail.component.imageSection
+import com.sachin.shopping.demo.ui.productdetail.component.reviewsSection
 import org.orbitmvi.orbit.compose.collectAsState
 
 @Composable
@@ -79,213 +51,89 @@ fun ProductDetailScreen(
     viewModel: ProductDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.collectAsState()
-    val product = state.product
-
     var descExpanded by remember { mutableStateOf(false) }
 
+    ProductDetailScreen(
+        navigateBack = navigateBack,
+        navigateToCart = navigateToCart,
+        onDescExpandedChange = { descExpanded = it },
+        onQuantityChange = { viewModel.onQuantityChange(it) },
+        onRetry = { viewModel.loadProduct() },
+        descExpanded = descExpanded,
+        state = state
+    )
+}
+
+@Composable
+private fun ProductDetailScreen(
+    navigateBack: () -> Unit,
+    navigateToCart: () -> Unit,
+    onDescExpandedChange: (Boolean) -> Unit,
+    onQuantityChange: (Int) -> Unit,
+    onRetry: () -> Unit,
+    descExpanded: Boolean,
+    state: ProductDetailState,
+) {
     Scaffold(
         topBar = {
-            Box(
-                modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                IconButton(
-                    onClick = navigateBack,
-                    modifier = Modifier
-                        .padding(start = 16.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surface,
-                            shape = CircleShape
-                        )
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = null
-                    )
-                }
-            }
+            BackButtonTopBar(onBackClick = navigateBack)
         },
         bottomBar = {
-            if (product != null) {
-                Surface(
-                    shadowElevation = 12.dp,
-                    color = MaterialTheme.colorScheme.surface
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .windowInsetsPadding(WindowInsets.navigationBars)
-                            .padding(16.dp)
-                    ) {
-                        AnimatedVisibility(
-                            visible = state.quantity > 0,
-                            enter = fadeIn() + expandHorizontally(
-                                expandFrom = Alignment.Start
-                            ),
-                            exit = fadeOut() + shrinkHorizontally(
-                                shrinkTowards = Alignment.Start
-                            )
-                        ) {
-                            QuantitySelector(
-                                quantity = state.quantity,
-                                onQuantityChange = viewModel::onQuantityChange,
-                                maxQuantity = product.stock,
-                                modifier = Modifier.padding(end = 16.dp)
-                            )
-                        }
-
-                        Button(
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                if (state.quantity > 0) {
-                                    navigateToCart()
-                                } else {
-                                    viewModel.onQuantityChange(1)
-                                }
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    if (state.quantity > 0)
-                                        R.drawable.ic_cart
-                                    else
-                                        R.drawable.ic_add_to_cart
-                                ),
-                                contentDescription = null,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                            Text(
-                                if (state.quantity > 0) "Go to Cart" else "Add to Cart"
-                            )
-                        }
-                    }
-                }
+            if (state.product != null) {
+                BottomBar(
+                    onGoToCartClick = navigateToCart,
+                    onQuantityChange = onQuantityChange,
+                    quantity = state.quantity,
+                    stock = state.product.stock
+                )
             }
         }
     ) { innerPadding ->
         LazyColumn(modifier = Modifier.padding(innerPadding)) {
-            if (state.isLoading) {
-                item {
-                    Box(modifier = Modifier.fillParentMaxSize()) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            when {
+                state.isLoading -> {
+                    loadingIndicator()
+                }
+
+                state.error != null -> {
+                    item {
+                        CenteredMessage(
+                            text = state.error,
+                            modifier = Modifier.fillParentMaxSize(),
+                            actionLabel = "Retry",
+                            onAction = onRetry
+                        )
                     }
                 }
-            } else if (product != null) {
-                heroSection(images = product.images)
 
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                MaterialTheme.colorScheme.surface,
-                                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-                            )
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        Spacer(Modifier.size(16.dp))
-                        product.brand?.let { brand ->
-                            BrandText(brand = brand)
-                        }
-                        Spacer(modifier = Modifier.size(6.dp))
-                        Text(
-                            text = product.title,
-                            fontSize = 18.sp,
-                            lineHeight = 24.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 4.dp)
-                        ) {
-                            StarRating(product.rating)
-                            Text(
-                                " (${product.reviews.size})",
-                                style = MaterialTheme.typography.labelMedium,
-                                lineHeight = MaterialTheme.typography.labelMedium.fontSize
-                            )
-                        }
-                        Spacer(modifier = Modifier.size(8.dp))
+                state.product != null -> {
+                    val product = state.product
+                    imageSection(images = product.images)
 
-                        PriceSection(
-                            discountedPrice = product.discountedPrice,
-                            originalPrice = product.price,
-                            discountPercentage = product.discountPercentage
-                        )
+                    detailSection(
+                        brand = product.brand,
+                        title = product.title,
+                        rating = product.rating,
+                        reviewsCount = product.reviews.size,
+                        discountedPrice = product.discountedPrice,
+                        originalPrice = product.price,
+                        description = product.description,
+                        discountPercentage = product.discountPercentage,
+                        descExpanded = descExpanded,
+                        onDescExpandedChange = onDescExpandedChange
+                    )
 
-                        Spacer(modifier = Modifier.size(16.dp))
+                    additionalInfoSection(
+                        shippingInfo = product.shippingInformation,
+                        returnPolicy = product.returnPolicy,
+                        warrantyInfo = product.warrantyInformation
+                    )
 
-                        ReadMoreText(
-                            text = product.description,
-                            expanded = descExpanded,
-                            onExpandedChange = { descExpanded = it },
-                            style = MaterialTheme.typography.bodyMedium,
-                            readMoreText = "more",
-                            readMoreStyle = SpanStyle(
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            readMoreMaxLines = 3
-                        )
+                    if (product.reviews.isNotEmpty()) {
+                        reviewsSection(reviews = product.reviews)
                     }
 
                 }
-
-                item {
-                    Surface(
-                        modifier = Modifier.fillParentMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(top = 16.dp)
-                                .padding(horizontal = 16.dp)
-                        ) {
-                            //HorizontalDivider()
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp)
-                            ) {
-                                InfoBox(
-                                    iconResId = R.drawable.ic_shipping,
-                                    text = product.shippingInformation,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                VerticalDivider(
-                                    modifier = Modifier
-                                        .height(32.dp)
-                                        .padding(horizontal = 8.dp)
-                                        .align(Alignment.CenterVertically)
-                                )
-                                InfoBox(
-                                    iconResId = R.drawable.ic_return,
-                                    text = product.returnPolicy,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                VerticalDivider(
-                                    modifier = Modifier
-                                        .height(32.dp)
-                                        .padding(horizontal = 8.dp)
-                                        .align(Alignment.CenterVertically)
-                                )
-                                InfoBox(
-                                    iconResId = R.drawable.ic_warranty,
-                                    text = product.warrantyInformation,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            //HorizontalDivider()
-                        }
-                    }
-                }
-
-                if (product.reviews.isNotEmpty()) {
-                    reviewsSection(reviews = product.reviews)
-                }
-
             }
 
         }
@@ -293,209 +141,96 @@ fun ProductDetailScreen(
     }
 }
 
+
 @Composable
-private fun InfoBox(
-    iconResId: Int,
-    text: String,
+private fun BackButtonTopBar(
+    onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
+    Box(
+        modifier = modifier
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .fillMaxWidth()
+            .height(56.dp)
     ) {
-        Icon(
-            painter = painterResource(iconResId),
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
-    }
-
-}
-
-@Composable
-private fun ImageSlider(
-    images: List<String>,
-    modifier: Modifier = Modifier
-) {
-    val pagerState = rememberPagerState { images.size }
-    Box(modifier = modifier) {
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-            AsyncImage(
-                model = images[page],
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-        if (pagerState.pageCount > 1) {
-            DotsIndicator(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp),
-                dotCount = pagerState.pageCount,
-                type = ShiftIndicatorType(
-                    dotsGraphic = DotGraphic(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        size = 6.dp
-                    )
-                ),
-                pagerState = pagerState
-            )
-
-        }
-    }
-}
-
-@Composable
-private fun PriceSection(
-    originalPrice: Double,
-    discountedPrice: Double?,
-    discountPercentage: Int,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.padding(top = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = formatPrice(discountedPrice ?: originalPrice),
-            style = TextStyle(
-                fontSize = 30.sp,
-                lineHeight = 36.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        )
-
-        if (discountedPrice != null) {
-            Text(
-                text = formatPrice(originalPrice),
-                style = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    textDecoration = TextDecoration.LineThrough
+        IconButton(
+            onClick = onBackClick,
+            modifier = Modifier
+                .padding(start = 16.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = CircleShape
                 )
-            )
-
-            DiscountText(discountPercentage = discountPercentage)
-        }
-    }
-}
-
-private fun LazyListScope.heroSection(
-    images: List<String>
-) {
-    item {
-        ImageSlider(
-            images = images,
-            modifier = Modifier
-                .fillParentMaxWidth()
-                .fillMaxHeight(0.5f)
-        )
-    }
-}
-
-private fun LazyListScope.reviewsSection(
-    reviews: List<Review>
-) {
-    item {
-        HorizontalDivider()
-        Text(
-            "Customer Reviews (${reviews.size})",
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier
-                .fillParentMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(16.dp)
-        )
-    }
-    items(reviews) { review ->
-        Surface(
-            modifier = Modifier.fillParentMaxWidth(),
         ) {
-            OutlinedCard(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 12.dp)
-            ) {
-                Spacer(modifier = Modifier.size(12.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Avatar(name = review.reviewerName)
-                    Column(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .weight(1f)
-                    ) {
-                        Text(
-                            text = review.reviewerName,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.size(4.dp))
-                        StarRating(rating = review.rating.toDouble())
-                    }
-
-                    Text(
-                        text = RelativeTimeFormatter.format(review.date),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.align(Alignment.Top)
-                    )
-                }
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = review.comment,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                Spacer(modifier = Modifier.size(12.dp))
-            }
+            Icon(
+                painter = painterResource(R.drawable.ic_arrow_back),
+                contentDescription = null
+            )
         }
     }
 }
 
 @Composable
-private fun StarRating(
-    rating: Double,
-    modifier: Modifier = Modifier
+private fun BottomBar(
+    onGoToCartClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onQuantityChange: (Int) -> Unit,
+    quantity: Int,
+    stock: Int
 ) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    Surface(
+        shadowElevation = 12.dp,
+        color = MaterialTheme.colorScheme.surface,
+        modifier = modifier
     ) {
-        repeat(5) {
-            Icon(
-                painter = painterResource(R.drawable.ic_star),
-                contentDescription = null,
-                tint = if (it < rating) Color(0xFFFFB900) else Color.Gray,
-                modifier = Modifier.size(14.dp)
-            )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(16.dp)
+        ) {
+            AnimatedVisibility(
+                visible = quantity > 0,
+                enter = fadeIn() + expandHorizontally(
+                    expandFrom = Alignment.Start
+                ),
+                exit = fadeOut() + shrinkHorizontally(
+                    shrinkTowards = Alignment.Start
+                )
+            ) {
+                QuantitySelector(
+                    quantity = quantity,
+                    onQuantityChange = onQuantityChange,
+                    maxQuantity = stock,
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+            }
+
+            Button(
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    if (quantity > 0) {
+                        onGoToCartClick()
+                    } else {
+                        onQuantityChange(1)
+                    }
+                }
+            ) {
+                Icon(
+                    painter = painterResource(
+                        if (quantity > 0)
+                            R.drawable.ic_cart
+                        else
+                            R.drawable.ic_add_to_cart
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(
+                    if (quantity > 0) "Go to Cart" else "Add to Cart"
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.width(4.dp))
-
-        Text(
-            text = String.format("%.1f", rating),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            lineHeight = MaterialTheme.typography.labelMedium.fontSize
-        )
     }
 }
+

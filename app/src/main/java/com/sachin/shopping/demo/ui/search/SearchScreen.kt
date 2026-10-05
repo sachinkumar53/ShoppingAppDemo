@@ -50,6 +50,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.sachin.shopping.demo.R
 import com.sachin.shopping.demo.data.model.ProductListItem
+import com.sachin.shopping.demo.ui.component.CenteredMessage
 import com.sachin.shopping.demo.util.formatPrice
 import org.orbitmvi.orbit.compose.collectAsState
 
@@ -225,31 +226,6 @@ private fun SearchResultRow(item: ProductListItem, onClick: () -> Unit) {
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun CenteredMessage(
-    text: String,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-        if (actionLabel != null && onAction != null) {
-            TextButton(onClick = onAction) { Text(actionLabel) }
         }
     }
 }
