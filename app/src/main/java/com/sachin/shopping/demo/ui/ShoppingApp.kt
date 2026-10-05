@@ -25,6 +25,9 @@ fun ShoppingApp() {
                 navigateToSearch = {
                     navController.navigate(SearchRoute)
                 },
+                navigateToCart = {
+                    navController.navigate(CartRoute)
+                },
                 onProductClick = { product ->
                     navController.navigate(ProductDetailRoute(productId = product.id))
                 }

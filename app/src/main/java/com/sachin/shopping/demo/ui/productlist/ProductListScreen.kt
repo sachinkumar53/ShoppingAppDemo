@@ -1,6 +1,11 @@
 package com.sachin.shopping.demo.ui.productlist
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +19,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -27,14 +33,17 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,19 +58,24 @@ import coil3.compose.AsyncImage
 import com.sachin.shopping.demo.R
 import com.sachin.shopping.demo.data.model.ProductListing
 import com.sachin.shopping.demo.util.formatPrice
+import org.orbitmvi.orbit.compose.collectAsState
 
 @Composable
 fun ProductListScreen(
     navigateToSearch: () -> Unit,
+    navigateToCart: () -> Unit,
     onProductClick: (ProductListing) -> Unit,
     viewModel: ProductListViewModel = hiltViewModel()
 ) {
+    val state by viewModel.collectAsState()
     val paginatedProducts = viewModel.products.collectAsLazyPagingItems()
 
     ProductListScreen(
         navigateToSearch = navigateToSearch,
+        navigateToCart = navigateToCart,
         onProductClick = onProductClick,
-        productListingItems = paginatedProducts
+        productListingItems = paginatedProducts,
+        state = state
     )
 }
 
@@ -69,8 +83,10 @@ fun ProductListScreen(
 @Composable
 private fun ProductListScreen(
     navigateToSearch: () -> Unit,
+    navigateToCart: () -> Unit,
     onProductClick: (ProductListing) -> Unit,
-    productListingItems: LazyPagingItems<ProductListing>
+    productListingItems: LazyPagingItems<ProductListing>,
+    state: ProductListUiState
 ) {
     Scaffold(
         topBar = {
@@ -81,6 +97,48 @@ private fun ProductListScreen(
                     .padding(horizontal = 16.dp)
                     .padding(top = 32.dp)
             )
+        },
+        bottomBar = {
+            AnimatedVisibility(
+                visible = state.cartCount > 0,
+                enter = fadeIn() + slideInVertically(initialOffsetY = { fullHeight -> fullHeight }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { fullHeight -> fullHeight })
+            ) {
+                OutlinedCard(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+
+                        Column {
+                            Text(
+                                text = pluralStringResource(R.plurals.cart_items, state.cartCount, state.cartCount),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                            Spacer(modifier = Modifier.size(4.dp))
+                            Text(
+                                text = formatPrice(state.cartTotal),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+
+                        Button(onClick = navigateToCart) {
+                            Text("View cart")
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_right),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .offset(x = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
         }
     ) { innerPadding ->
         LazyVerticalStaggeredGrid(
